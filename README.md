@@ -1,28 +1,111 @@
-# Open-Source Project Health & Momentum Analytics
+# Open-Source Project Health & Momentum Analytics Using GH Archive
 
-DS-3001 Data Analysis and Visualization - Phase 1
+## Project Overview
 
-## Contents
-- `docs/phase1_proposal.docx`
-- `data/samples/` - three real GH Archive hourly `.json.gz` samples
-- `src/profile_gharchive.py` - reproducible streaming profiler
-- `data_discovery_evidence.md` - measured evidence and design decisions
+This project is a data engineering and analytics pipeline for studying public open-source software activity recorded by **GH Archive**.
 
-## Source
-GH Archive: https://www.gharchive.org/
-Archive pattern: `https://data.gharchive.org/YYYY-MM-DD-H.json.gz`
+GH Archive provides GitHub public activity as hourly compressed JSON archives. The project will use these archives to build an **Apache Spark** pipeline following a Bronze, Silver, and Gold Medallion architecture. The final analytical datasets will support an interactive **Power BI** dashboard focused on repository activity, collaboration, momentum, event composition, and unusual activity patterns.
 
-## Architecture
-GH Archive → Bronze → Silver → Gold → Power BI
+## Project Objectives
 
-## Full vs Incremental sample
-The 10:00 and 11:00 files are representative raw sample payloads for the initial/full-load baseline. The 12:00 file is the subsequent incremental payload. The actual Phase 2 full-load baseline will use a larger bounded historical window selected for Free Edition constraints.
+The project aims to:
 
-## Run the profiler
-```bash
-python src/profile_gharchive.py data/samples/2026-09-25-10.json.gz
+* Ingest real-world GitHub activity data from GH Archive.
+* Process a bounded historical baseline as a full load.
+* Process newly available hourly archives as incremental batches.
+* Build Bronze, Silver, and Gold data layers using Apache Spark.
+* Produce analytical datasets for repository, contributor, pull request, issue, review, and event-level analysis.
+* Develop a Power BI dashboard based on the resulting Gold tables.
+
+## Data Source
+
+**GH Archive:** https://www.gharchive.org/
+
+GH Archive provides public GitHub timeline activity in hourly JSON archives.
+
+Archive format:
+
+```text
+https://data.gharchive.org/YYYY-MM-DD-H.json.gz
 ```
-Multiple files may be supplied.
 
-## Privacy
-The raw source contains public actor/user information and may contain user-generated text. Bronze preserves source data for traceability; Silver removes unnecessary profile fields/free text; Gold exposes aggregates.
+Each hourly archive is treated as an append-oriented ingestion unit. The project does not model GH Archive as a conventional transactional source with updates and deletes.
+
+## Phase 1 Data Evidence
+
+Three consecutive hourly archives were collected and profiled during Phase 1:
+
+| Sample               |      Events | Compressed Size | Uncompressed Size |
+| -------------------- | ----------: | --------------: | ----------------: |
+| 2026-09-25 10:00 UTC |      84,754 |        14.11 MB |          66.74 MB |
+| 2026-09-25 11:00 UTC |      89,852 |        14.20 MB |          67.65 MB |
+| 2026-09-25 12:00 UTC |      93,655 |        14.73 MB |          70.54 MB |
+| **Total**            | **268,261** |    **43.04 MB** |     **204.93 MB** |
+
+The observed average was approximately **89,420 events/hour** and **14.35 MB compressed/hour**. Based on these samples, the planning estimate is approximately **344 MB compressed per day**, **2.41 GB per week**, and **10.3 GB over 30 days**.
+
+These figures are estimates from the sampled hours and will be reassessed before a larger historical load.
+
+## Pipeline Architecture
+
+```text
+GH Archive hourly JSON
+        |
+        v
+Bronze
+Raw source archives
+        |
+        v
+Silver
+Cleaned common event table
++ event-specific tables
+        |
+        v
+Gold
+Analytical aggregate tables
+        |
+        v
+Power BI
+```
+
+### Bronze
+
+Raw GH Archive files will be preserved for traceability and reproducibility. Ingestion metadata will be maintained to prevent the same hourly source from being processed more than once.
+
+### Silver
+
+A common event table will provide consistent analytical fields such as event ID, event type, timestamp, repository, actor, organization, and ingestion hour.
+
+Event-specific Silver tables will be used for areas such as:
+
+* Pull requests
+* Issues
+* Issue comments
+* Reviews
+* Releases
+
+The Silver layer will also handle type casting, normalization, duplicate protection, and data minimization.
+
+### Gold
+
+Planned analytical tables include:
+
+* `gold_repo_activity`
+* `gold_repo_momentum`
+* `gold_contributor_activity`
+* `gold_event_mix`
+* `gold_pull_request_activity`
+* `gold_issue_activity`
+* `gold_review_activity`
+* `gold_activity_anomalies`
+
+The exact fields and aggregations will be finalized during implementation after profiling the available data.
+
+## Technology Stack
+
+* Apache Spark
+* Databricks Free Edition
+* Python
+* Git / GitHub
+* Power BI
+* GH Archive
