@@ -1,4 +1,4 @@
-# Phase 1 Data Discovery Evidence — GH Archive
+# Phase 1 Data Discovery Evidence  GH Archive
 
 Three consecutive real hourly archives were profiled:
 
