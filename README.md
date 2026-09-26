@@ -101,6 +101,21 @@ Planned analytical tables include:
 
 The exact fields and aggregations will be finalized during implementation after profiling the available data.
 
+## Power BI Dashboard & Business Questions
+
+The final Power BI dashboard will present a high-level view of open-source project activity and momentum using the Gold-layer datasets.
+
+The dashboard will focus on questions such as:
+
+* Which repositories show the highest levels of activity during the observation period?
+* How does repository activity change over time?
+* What types of GitHub events make up the majority of project activity?
+* Which repositories show notable changes or unusual activity patterns?
+* How do pull request, issue, review, and contributor activities vary across repositories?
+* Which contributors are most active within the observed dataset?
+
+Planned dashboard elements include repository activity trends, event-type distribution, contributor activity, pull request and issue metrics, and indicators of unusual activity. Interactive filters will allow users to explore the results by repository, time period, and event type where appropriate.
+
 ## Technology Stack
 
 * Apache Spark
