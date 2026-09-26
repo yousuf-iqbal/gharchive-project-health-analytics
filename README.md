@@ -1,12 +1,12 @@
 # Open-Source Project Health & Momentum Analytics
 
-DS-3001 Data Analysis and Visualization — Phase 1
+DS-3001 Data Analysis and Visualization - Phase 1
 
 ## Contents
 - `docs/phase1_proposal.docx`
-- `data/samples/` — three real GH Archive hourly `.json.gz` samples
-- `src/profile_gharchive.py` — reproducible streaming profiler
-- `data_discovery_evidence.md` — measured evidence and design decisions
+- `data/samples/` - three real GH Archive hourly `.json.gz` samples
+- `src/profile_gharchive.py` - reproducible streaming profiler
+- `data_discovery_evidence.md` - measured evidence and design decisions
 
 ## Source
 GH Archive: https://www.gharchive.org/
