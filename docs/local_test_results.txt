@@ -1,0 +1,46 @@
+Local test run (plain PySpark, no Databricks, no Delta). 2026-10-10 10:17:08.928420
+Spark version: 4.0.1
+
+PASS  hour_key pads the hour
+PASS  hour_key accepts padded input
+PASS  hour_key rejects other names
+PASS  all sample files are listed in order  (3)
+PASS  incremental skips files already done
+PASS  force_reprocess includes files already done
+PASS  backfill re-processes a done file inside the window
+PASS  2026-09-25-10.json.gz: no unexpected top level keys  ([])
+PASS  2026-09-25-10.json.gz: every line becomes a Bronze row  (84754 of 84754)
+PASS  2026-09-25-10.json.gz: nothing quarantined  (0)
+PASS  2026-09-25-11.json.gz: no unexpected top level keys  ([])
+PASS  2026-09-25-11.json.gz: every line becomes a Bronze row  (89852 of 89852)
+PASS  2026-09-25-11.json.gz: nothing quarantined  (0)
+PASS  2026-09-25-12.json.gz: no unexpected top level keys  ([])
+PASS  2026-09-25-12.json.gz: every line becomes a Bronze row  (93655 of 93655)
+PASS  2026-09-25-12.json.gz: nothing quarantined  (0)
+PASS  payload is kept as raw JSON text  ({"repository_id":1386849974,"push_id":44551688333,"ref":"ref)
+PASS  every Bronze column is a string except load_timestamp
+PASS  silver_event has one row per event  (84754)
+PASS  silver_push matches PushEvent count  (70102)
+PASS  silver_issue matches IssuesEvent count  (319)
+PASS  silver_pull_request matches PullRequestEvent count  (877)
+PASS  no quarantine rows for clean data
+PASS  event_id is BIGINT
+PASS  created_at is TIMESTAMP
+PASS  is_public is BOOLEAN
+PASS  raw actor_login is not carried into Silver
+PASS  actor_login_hash is a 64 character SHA-256
+PASS  load_timestamp exists on every Silver table
+PASS  no duplicate event_id in silver_event
+PASS  processing the same data twice gives identical row hashes (MERGE would update 0 rows)  (0)
+PASS  a different salt gives different hashes  (84754)
+PASS  new top level column is detected  (['new_field'])
+PASS  Bronze keeps 5 good rows (bad values are still text)  (5)
+PASS  Bronze quarantines the broken JSON line  (1)
+PASS  new column reaches the Bronze DataFrame
+PASS  quarantine reason is readable  (Line is not valid JSON or does not fit the explicit schema)
+PASS  Silver quarantines exactly the 2 bad rows  (2)
+PASS  bad date reason is present  (['created_at is not a valid timestamp', 'actor_id is not numeric'])
+PASS  bad actor id reason is present  (['created_at is not a valid timestamp', 'actor_id is not numeric'])
+PASS  the rest of the batch still loads  (3)
+
+41 of 41 checks passed

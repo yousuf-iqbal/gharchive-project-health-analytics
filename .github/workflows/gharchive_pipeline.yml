@@ -1,0 +1,77 @@
+name: GH Archive pipeline
+
+on:
+  # Automatic run: every 6 hours. It fetches the last 24 hours it does not have yet.
+  schedule:
+    - cron: "20 */6 * * *"
+  # Manual run from the Actions tab. Use this for backfills.
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "incremental = new files only, backfill = the hour range below"
+        type: choice
+        options: [incremental, backfill]
+        default: incremental
+      start_hour:
+        description: "Backfill start, e.g. 2026-10-01-00"
+        required: false
+        default: ""
+      end_hour:
+        description: "Backfill end, e.g. 2026-10-05-23"
+        required: false
+        default: ""
+      force_reprocess:
+        description: "true = process files again even if they succeeded before"
+        type: choice
+        options: ["false", "true"]
+        default: "false"
+      catchup_hours:
+        description: "Incremental only: how many recent hours to check"
+        required: false
+        default: "24"
+
+# Never run two pipelines at the same time (Free Edition has small limits)
+concurrency:
+  group: gharchive-pipeline
+  cancel-in-progress: false
+
+jobs:
+  fetch-and-run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+      DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+      MODE: ${{ github.event.inputs.mode || 'incremental' }}
+      START_HOUR: ${{ github.event.inputs.start_hour || '' }}
+      END_HOUR: ${{ github.event.inputs.end_hour || '' }}
+      FORCE: ${{ github.event.inputs.force_reprocess || 'false' }}
+      CATCHUP: ${{ github.event.inputs.catchup_hours || '24' }}
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install requests
+        run: pip install requests
+
+      - name: Download from GH Archive and upload to the Databricks Volume
+        id: fetch
+        run: |
+          python scripts/fetch_gharchive.py \
+            --mode "$MODE" \
+            --start-hour "$START_HOUR" \
+            --end-hour "$END_HOUR" \
+            --catchup-hours "$CATCHUP"
+
+      - name: Run the Databricks job (Raw to Bronze, then Bronze to Silver)
+        run: |
+          python scripts/trigger_job.py \
+            --mode "$MODE" \
+            --start-hour "$START_HOUR" \
+            --end-hour "$END_HOUR" \
+            --force-reprocess "$FORCE"
