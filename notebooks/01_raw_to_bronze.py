@@ -1,4 +1,8 @@
 # Databricks notebook source
+# /// script
+# [tool.databricks.environment]
+# environment_version = "6"
+# ///
 # MAGIC %md
 # MAGIC # 01_raw_to_bronze
 # MAGIC Reads the raw hourly files from the Volume and loads them into `bronze_events`.
@@ -19,7 +23,7 @@
 dbutils.widgets.dropdown("mode", "incremental", ["incremental", "backfill"])
 dbutils.widgets.text("start_hour", "")
 dbutils.widgets.text("end_hour", "")
-dbutils.widgets.dropdown("force_reprocess", "false", ["false", "true"])
+dbutils.widgets.dropdown("force_reprocess", "true", ["false", "true"])
 dbutils.widgets.text("raw_path", DEFAULT_RAW_PATH)
 
 mode, start_hour, end_hour, force, raw_path = read_parameters()

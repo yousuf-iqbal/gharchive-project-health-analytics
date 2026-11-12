@@ -1,4 +1,8 @@
 # Databricks notebook source
+# /// script
+# [tool.databricks.environment]
+# environment_version = "6"
+# ///
 # MAGIC %md
 # MAGIC # 02_bronze_to_silver
 # MAGIC Reads `bronze_events` one hour at a time, casts and validates it, hashes the username, and MERGEs into:

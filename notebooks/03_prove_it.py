@@ -1,4 +1,8 @@
 # Databricks notebook source
+# /// script
+# [tool.databricks.environment]
+# environment_version = "6"
+# ///
 # MAGIC %md
 # MAGIC # 03_prove_it
 # MAGIC This notebook produces the evidence for the Phase 2 rubric. Run the cells in order and take screenshots.
@@ -73,7 +77,7 @@ DRIFT_FOLDER = DEFAULT_RAW_PATH + "/drift_test"
 source_files = list_raw_files(DEFAULT_RAW_PATH)
 first_file = source_files[0]["path"]
 real_lines = []
-for row in spark.read.text(first_file).limit(6).collect():
+for row in spark.read.text(first_fi     le).limit(6).collect():
     real_lines.append(row["value"])
 
 test_lines = []
@@ -134,6 +138,11 @@ display(spark.sql("SELECT event_id, reason, source_file FROM " + SILVER_QUARANTI
 
 # COMMAND ----------
 
+dbutils.fs.rm("/Volumes/workspace/gharchive/raw/drift_test", True)
+   print("drift_test folder removed")
+
+# COMMAND ----------
+
 for t in [BRONZE_TABLE, BRONZE_QUARANTINE, SILVER_EVENT, SILVER_PUSH, SILVER_ISSUE, SILVER_PR, SILVER_QUARANTINE]:
     spark.sql("DELETE FROM " + t + " WHERE ingestion_hour = '2026-01-01-00'")
 dbutils.fs.rm(DRIFT_FOLDER, True)
@@ -151,5 +160,22 @@ display(spark.sql("""
            status, rows_inserted, rows_updated, rows_quarantined, error_message
     FROM """ + EXEC_LOG + """
     ORDER BY start_time DESC
-    LIMIT 50
 """))
+
+# COMMAND ----------
+
+# Size of each Silver/Bronze Delta table (current files only)
+tables = [BRONZE_TABLE, SILVER_EVENT, SILVER_PUSH, SILVER_ISSUE, SILVER_PR]
+total = 0
+for t in tables:
+    row = spark.sql("DESCRIBE DETAIL " + t).collect()[0]
+    mb = row["sizeInBytes"] / 1000000
+    total = total + mb
+    print("%-45s %8.1f MB  (%d files)" % (t, mb, row["numFiles"]))
+print("tables total: %.1f MB" % total)
+
+# Size of the raw hourly files in the Volume
+raw_total = 0
+for item in dbutils.fs.ls(DEFAULT_RAW_PATH):
+    raw_total = raw_total + item.size
+print("raw volume:   %.1f MB" % (raw_total / 1000000))

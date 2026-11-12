@@ -1,9 +1,12 @@
 # Databricks notebook source
+# /// script
+# [tool.databricks.environment]
+# environment_version = "6"
+# ///
 # MAGIC %md
 # MAGIC # 00_setup
-# MAGIC Run this notebook ONCE. It is safe to run again (everything uses IF NOT EXISTS).
-# MAGIC
-# MAGIC It creates:
+# MAGIC   
+# MAGIC  It creates:
 # MAGIC * the schema and the raw Volume (the landing folder for the hourly files)
 # MAGIC * Bronze and Silver tables, both quarantine tables, the schema drift log and the execution log
 # MAGIC
