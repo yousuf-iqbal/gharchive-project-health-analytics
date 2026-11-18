@@ -1,7 +1,7 @@
 # Gold Layer Data Dictionary
 
-Star schema in `workspace.gharchive`. Built by `notebooks/04_silver_to_gold.py` (third task of the job `gharchive_pipeline`), full refresh on every run.
-Keys are documented here and in the column comments. Delta does not enforce keys; `notebooks/05_gold_checks.py` checks them (duplicate keys and orphan foreign keys must be 0).
+Star schema in `workspace.gharchive`. Built by `notebooks/04_silver_to_gold.ipynb` (third task of the job `gharchive_pipeline`), full refresh on every run.
+Keys are documented here and in the column comments. Delta does not enforce keys; `notebooks/05_gold_checks.ipynb` checks them (duplicate keys and orphan foreign keys must be 0).
 
 ## ER diagram
 
@@ -20,7 +20,7 @@ erDiagram
         INT date_key PK
         DATE full_date
         STRING day_name
-        BOOLEAN is_weekend
+        BOOLEAN is_complete_day
     }
     dim_hour {
         INT hour_key PK
@@ -63,7 +63,7 @@ erDiagram
         BIGINT repo_id FK
         DOUBLE z_score
         DOUBLE growth_pct_7d
-        BOOLEAN is_surge
+        STRING surge_type
     }
 ```
 
@@ -80,7 +80,7 @@ erDiagram
 | fact_repo_daily | Fact | tracked repository x active day | date_key, repo_id | dim_date, dim_repo | date_key, repo_id |
 | fact_repo_trend | Fact | tracked repository x active day | date_key, repo_id | dim_date, dim_repo | date_key, repo_id |
 
-**Tracked repository:** at least 3 different contributors, or at least 3 community events (stars, forks, pull requests, reviews, issues, comments, releases) in the loaded window. Rule and numbers live in `notebooks/common_gold.py`.
+**Tracked repository:** at least 3 different contributors, or at least 3 community events (stars, forks, pull requests, reviews, issues, comments, releases) in the loaded window. Rule and numbers live in `notebooks/common_gold.ipynb`.
 
 ## Columns
 
@@ -97,6 +97,8 @@ erDiagram
 | day_name | STRING | |
 | week_of_year | INT | |
 | is_weekend | BOOLEAN | |
+| hours_loaded | INT | hourly GH Archive files loaded for this day (0 to 24) |
+| is_complete_day | BOOLEAN | at least 22 of 24 hours loaded |
 | load_timestamp | TIMESTAMP | |
 
 ### dim_hour
@@ -158,7 +160,7 @@ erDiagram
 | total_events | BIGINT | |
 | push_events, pull_request_events, pr_review_events, issue_events, issue_comment_events, release_events, watch_events, fork_events, create_events, delete_events | BIGINT | events by type (watch = star) |
 | distinct_actors | BIGINT | |
-| prs_opened, prs_closed | BIGINT | from silver_pull_request.action |
+| prs_opened, prs_closed, prs_merged | BIGINT | from silver_pull_request.action (opened, closed, merged) |
 | issues_opened, issues_closed | BIGINT | from silver_issue.action |
 | load_timestamp | TIMESTAMP | |
 
@@ -167,16 +169,17 @@ erDiagram
 |---|---|---|
 | date_key | INT | FK dim_date |
 | repo_id | BIGINT | FK dim_repo |
-| events | BIGINT | events that day |
-| has_full_baseline | BOOLEAN | 7 earlier days of data exist |
+| events | BIGINT | community events that day (PRs, reviews, issues, comments, stars, forks, releases); push, create and delete excluded because of source gaps |
+| has_full_baseline | BOOLEAN | the 7 previous days are all complete days |
 | baseline_avg | DOUBLE | average per day over the previous 7 calendar days (quiet days = 0) |
 | baseline_std | DOUBLE | sample standard deviation over the same 7 days |
-| z_score | DOUBLE | (events - baseline_avg) / baseline_std |
+| z_score | DOUBLE | (events - baseline_avg) / baseline_std; only when baseline_avg is at least 1 event per day |
 | pct_vs_baseline | DOUBLE | percent above or below the baseline |
 | events_last_7d | BIGINT | this day and the 6 days before |
 | events_prev_7d | BIGINT | the 7 days before that |
-| growth_pct_7d | DOUBLE | momentum in percent |
-| is_surge | BOOLEAN | at least 20 events and z_score of at least 3 (or 3x a flat baseline) |
+| growth_pct_7d | DOUBLE | momentum in percent; only when this day and the 13 days before are complete |
+| is_surge | BOOLEAN | surge_type is not NULL |
+| surge_type | STRING | Spike: baseline at least 1/day, at least 20 events, z_score at least 3. Breakout: baseline below 1/day and at least 50 events. NULL otherwise |
 | load_timestamp | TIMESTAMP | |
 
 ## Operational table added in Phase 3
